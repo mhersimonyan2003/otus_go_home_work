@@ -1,4 +1,4 @@
-module github.com/mhersimonyan2003/otus_go_home_work/tree/master/hw01_hello_otus
+module github.com/mhersimonyan2003/otus_go_home_work/hw01_hello_otus
 
 go 1.19
 
