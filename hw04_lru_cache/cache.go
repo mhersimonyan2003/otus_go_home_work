@@ -1,6 +1,8 @@
 package hw04lrucache
 
-import "sync"
+import (
+	"sync"
+)
 
 type Key string
 
@@ -26,21 +28,23 @@ func (c *lruCache) Set(key Key, value interface{}) bool {
 	c.mutex.Lock()
 	defer c.mutex.Unlock()
 
-	_, ok := c.items[key]
-	newItem := &ListItem{Value: cacheItem{key: key, value: value}, Next: c.queue.Front(), Prev: nil}
-	c.items[key] = newItem
+	item, ok := c.items[key]
+	cacheValue := cacheItem{key: key, value: value}
 
 	if !ok {
 		if c.queue.Len() == c.capacity {
-			c.queue.Remove(c.queue.Back())
 			if backItemValue, ok := c.queue.Back().Value.(cacheItem); ok {
 				delete(c.items, backItemValue.key)
 			}
+			c.queue.Remove(c.queue.Back())
 		}
 
-		c.queue.PushFront(newItem)
+		c.queue.PushFront(cacheValue)
+		c.items[key] = c.queue.Front()
 	} else {
-		c.queue.MoveToFront(newItem)
+		item.Value = cacheItem{key: key, value: value}
+
+		c.queue.MoveToFront(item)
 	}
 
 	return ok
