@@ -5,7 +5,11 @@ import (
 	"sync"
 )
 
-var ErrErrorsLimitExceeded = errors.New("errors limit exceeded")
+var (
+	ErrErrorsLimitExceeded = errors.New("errors limit exceeded")
+	ErrInvalidWorkersLimit = errors.New("invalid workers limit")
+	wg                     = sync.WaitGroup{}
+)
 
 type Task func() error
 
@@ -40,7 +44,7 @@ func controller(doneChan chan struct{}, tasks []Task, m int) (chan Task, chan st
 	return tasksChan, errorsChan, &errors
 }
 
-func consumer(doneChan chan struct{}, wg *sync.WaitGroup, tasksChan chan Task, errorsChan chan struct{}) {
+func consumer(doneChan chan struct{}, tasksChan chan Task, errorsChan chan struct{}) {
 	defer wg.Done()
 
 	for {
@@ -61,18 +65,20 @@ func consumer(doneChan chan struct{}, wg *sync.WaitGroup, tasksChan chan Task, e
 }
 
 func Run(tasks []Task, n, m int) error {
+	if n <= 0 {
+		return ErrInvalidWorkersLimit
+	}
 	if m <= 0 {
 		return ErrErrorsLimitExceeded
 	}
 
-	wg := sync.WaitGroup{}
 	doneChan := make(chan struct{})
 
 	tasksChan, errorsChan, errors := controller(doneChan, tasks, m)
 
 	for i := 0; i < n; i++ {
 		wg.Add(1)
-		go consumer(doneChan, &wg, tasksChan, errorsChan)
+		go consumer(doneChan, tasksChan, errorsChan)
 	}
 
 	wg.Wait()
