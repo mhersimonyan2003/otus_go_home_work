@@ -104,8 +104,8 @@ func TestRun(t *testing.T) {
 			})
 		}
 
-		workersCount := 10
-		maxErrorsCount := -1
+		workersCount := -1
+		maxErrorsCount := 10
 		err := Run(tasks, workersCount, maxErrorsCount)
 
 		require.Truef(t, errors.Is(err, ErrInvalidWorkersLimit), "actual err - %v", err)
