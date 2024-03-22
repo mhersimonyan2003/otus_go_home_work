@@ -3,6 +3,7 @@ package hw05parallelexecution
 import (
 	"errors"
 	"sync"
+	"sync/atomic"
 )
 
 var (
@@ -13,57 +14,6 @@ var (
 
 type Task func() error
 
-func controller(doneChan chan struct{}, tasks []Task, m int) (chan Task, chan struct{}, *int) {
-	tasksChan := make(chan Task)
-	errorsChan := make(chan struct{})
-
-	count := 0
-	errors := 0
-
-	go func() {
-		defer close(doneChan)
-
-		for {
-			select {
-			case tasksChan <- tasks[count]:
-				count++
-
-				if count == len(tasks) {
-					return
-				}
-			case <-errorsChan:
-				errors++
-
-				if errors == m {
-					return
-				}
-			}
-		}
-	}()
-
-	return tasksChan, errorsChan, &errors
-}
-
-func consumer(doneChan chan struct{}, tasksChan chan Task, errorsChan chan struct{}) {
-	defer wg.Done()
-
-	for {
-		select {
-		case <-doneChan:
-			return
-		case task := <-tasksChan:
-			err := task()
-			if err != nil {
-				select {
-				case <-doneChan:
-					return
-				case errorsChan <- struct{}{}:
-				}
-			}
-		}
-	}
-}
-
 func Run(tasks []Task, n, m int) error {
 	if n <= 0 {
 		return ErrInvalidWorkersLimit
@@ -72,18 +22,59 @@ func Run(tasks []Task, n, m int) error {
 		return ErrErrorsLimitExceeded
 	}
 
+	var ops atomic.Int32
+
+	controller := func(doneChan chan struct{}) chan Task {
+		tasksChan := make(chan Task)
+
+		go func() {
+			defer close(doneChan)
+
+			for _, task := range tasks {
+				tasksChan <- task
+
+				if int(ops.Load()) >= m {
+					return
+				}
+			}
+		}()
+
+		return tasksChan
+	}
+
+	consumer := func(doneChan chan struct{}, tasksChan chan Task) {
+		defer wg.Done()
+
+		for {
+			select {
+			case <-doneChan:
+				return
+			case task := <-tasksChan:
+				err := task()
+				if err != nil {
+					select {
+					case <-doneChan:
+						return
+					default:
+						ops.Add(1)
+					}
+				}
+			}
+		}
+	}
+
 	doneChan := make(chan struct{})
 
-	tasksChan, errorsChan, errors := controller(doneChan, tasks, m)
+	tasksChan := controller(doneChan)
 
 	for i := 0; i < n; i++ {
 		wg.Add(1)
-		go consumer(doneChan, tasksChan, errorsChan)
+		go consumer(doneChan, tasksChan)
 	}
 
 	wg.Wait()
 
-	if *errors >= m {
+	if int(ops.Load()) >= m {
 		return ErrErrorsLimitExceeded
 	}
 
