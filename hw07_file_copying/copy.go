@@ -26,7 +26,7 @@ func Copy(fromPath, toPath string, offset, limit int64) error {
 		return err
 	}
 
-	if fileInfo.Mode().Perm()&0400 == 0 {
+	if fileInfo.Mode().Perm()&0o400 == 0 {
 		return ErrUnsupportedFile
 	}
 
