@@ -14,15 +14,16 @@ func ExecutePipeline(in In, done In, stages ...Stage) Out {
 
 		go func(in In) {
 			defer close(inChan)
-
-			for value := range in {
+			for {
 				select {
 				case <-done:
 					return
-				default:
+				case val, ok := <-in:
+					if !ok {
+						return
+					}
+					inChan <- val
 				}
-
-				inChan <- value
 			}
 		}(in)
 
