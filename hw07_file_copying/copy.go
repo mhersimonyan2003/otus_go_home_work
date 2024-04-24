@@ -23,6 +23,12 @@ func Copy(fromPath, toPath string, offset, limit int64) error {
 	if limit < 0 {
 		return ErrInvalidLimit
 	}
+
+	toFile, err := os.Create(toPath)
+	if err != nil {
+		return err
+	}
+	defer toFile.Close()
 	fromFile, err := os.Open(fromPath)
 	if err != nil {
 		return err
@@ -39,23 +45,17 @@ func Copy(fromPath, toPath string, offset, limit int64) error {
 		return ErrUnsupportedFile
 	}
 
-	if offset > fileSize {
-		return ErrOffsetExceedsFileSize
-	}
-
-	toFile, err := os.Create(toPath)
-	if err != nil {
-		return err
-	}
-	defer toFile.Close()
-
 	toFileInfo, err := toFile.Stat()
 	if err != nil {
 		return err
 	}
 
 	if os.SameFile(fileInfo, toFileInfo) {
-		return ErrUnsupportedFile
+		return ErrSameFile
+	}
+
+	if offset > fileSize {
+		return ErrOffsetExceedsFileSize
 	}
 
 	_, err = fromFile.Seek(offset, 0)

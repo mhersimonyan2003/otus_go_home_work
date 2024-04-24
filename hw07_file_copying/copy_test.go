@@ -32,7 +32,9 @@ func TestCopy(t *testing.T) {
 			require.NoError(t, Copy("./testdata/input.txt", "./testdata/output.txt", params.Offset, params.Limit))
 
 			file1, err := os.Open("./testdata/output.txt")
-			defer os.Remove("./testdata/output.txt")
+			t.Cleanup(func() {
+				os.Remove("./testdata/output.txt")
+			})
 
 			if err != nil {
 				return
@@ -71,8 +73,12 @@ func TestCopy(t *testing.T) {
 		require.Error(t, err)
 		require.True(t, errors.Is(err, ErrInvalidLimit))
 	})
+	t.Run("same content, differen files", func(t *testing.T) {
+		err := Copy("./testdata/same_file.txt", "./testdata/same_file_1.txt", 0, 10)
+		require.NoError(t, err)
+	})
 	t.Run("same files", func(t *testing.T) {
-		err := Copy("./testdata/input.txt", "./testdata/input.txt", 0, 10)
+		err := Copy("./testdata/same_file.txt", "./testdata/same_file.txt", 0, 10)
 		require.Error(t, err)
 		require.True(t, errors.Is(err, ErrSameFile))
 	})
