@@ -13,6 +13,7 @@ var (
 	ErrOffsetExceedsFileSize = errors.New("offset exceeds file size")
 	ErrInvalidOffset         = errors.New("invalid offset")
 	ErrInvalidLimit          = errors.New("invalid limit")
+	ErrSameFile              = errors.New("files are the same")
 )
 
 func Copy(fromPath, toPath string, offset, limit int64) error {
@@ -47,6 +48,15 @@ func Copy(fromPath, toPath string, offset, limit int64) error {
 		return err
 	}
 	defer toFile.Close()
+
+	toFileInfo, err := toFile.Stat()
+	if err != nil {
+		return err
+	}
+
+	if os.SameFile(fileInfo, toFileInfo) {
+		return ErrUnsupportedFile
+	}
 
 	_, err = fromFile.Seek(offset, 0)
 	if err != nil {
