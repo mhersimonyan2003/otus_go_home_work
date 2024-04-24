@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"errors"
 	"fmt"
 	"os"
 	"testing"
@@ -60,4 +61,19 @@ func TestCopy(t *testing.T) {
 			require.NoError(t, scanner2.Err())
 		})
 	}
+	t.Run("invalid offset", func(t *testing.T) {
+		err := Copy("./testdata/input.txt", "./testdata/output.txt", -1, 10)
+		require.Error(t, err)
+		require.True(t, errors.Is(err, ErrInvalidOffset))
+	})
+	t.Run("invalid limit", func(t *testing.T) {
+		err := Copy("./testdata/input.txt", "./testdata/output.txt", 10, -1)
+		require.Error(t, err)
+		require.True(t, errors.Is(err, ErrInvalidLimit))
+	})
+	t.Run("same files", func(t *testing.T) {
+		err := Copy("./testdata/input.txt", "./testdata/input.txt", 0, 10)
+		require.Error(t, err)
+		require.True(t, errors.Is(err, ErrSameFile))
+	})
 }
