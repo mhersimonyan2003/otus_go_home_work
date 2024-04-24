@@ -11,7 +11,6 @@ import (
 var (
 	ErrUnsupportedFile       = errors.New("unsupported file")
 	ErrOffsetExceedsFileSize = errors.New("offset exceeds file size")
-	ErrSameFile              = errors.New("same file")
 	ErrInvalidOffset         = errors.New("invalid offset")
 	ErrInvalidLimit          = errors.New("invalid limit")
 )
@@ -23,43 +22,31 @@ func Copy(fromPath, toPath string, offset, limit int64) error {
 	if limit < 0 {
 		return ErrInvalidLimit
 	}
-
 	fromFile, err := os.Open(fromPath)
 	if err != nil {
 		return err
 	}
 	defer fromFile.Close()
-	toFile, err := os.Create(toPath)
-	if err != nil {
-		return err
-	}
-	defer toFile.Close()
-	fromFileInfo, err := fromFile.Stat()
-	if err != nil {
-		return err
-	}
 
-	toFileInfo, err := toFile.Stat()
+	fileInfo, err := fromFile.Stat()
+	fileSize := fileInfo.Size()
 	if err != nil {
 		return err
 	}
 
-	if os.SameFile(fromFileInfo, toFileInfo) {
-		return ErrSameFile
-	}
-
-	fileSize := fromFileInfo.Size()
-	if err != nil {
-		return err
-	}
-
-	if fromFileInfo.Mode().Perm()&0o400 == 0 {
+	if fileInfo.Mode().Perm()&0o400 == 0 {
 		return ErrUnsupportedFile
 	}
 
 	if offset > fileSize {
 		return ErrOffsetExceedsFileSize
 	}
+
+	toFile, err := os.Create(toPath)
+	if err != nil {
+		return err
+	}
+	defer toFile.Close()
 
 	_, err = fromFile.Seek(offset, 0)
 	if err != nil {

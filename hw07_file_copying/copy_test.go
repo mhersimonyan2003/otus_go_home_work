@@ -71,9 +71,4 @@ func TestCopy(t *testing.T) {
 		require.Error(t, err)
 		require.True(t, errors.Is(err, ErrInvalidLimit))
 	})
-	t.Run("same files", func(t *testing.T) {
-		err := Copy("./testdata/input.txt", "./testdata/input.txt", 0, 10)
-		require.Error(t, err)
-		require.True(t, errors.Is(err, ErrSameFile))
-	})
 }
