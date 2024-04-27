@@ -32,7 +32,6 @@ func TestRunCmd(t *testing.T) {
 		require.Equal(t, 0, returnCode)
 	})
 
-	// Test case 4: Test with command that fails
 	t.Run("Command that fails", func(t *testing.T) {
 		returnCode := RunCmd([]string{"invalid-command"}, Environment{})
 		require.Equal(t, -1, returnCode)
