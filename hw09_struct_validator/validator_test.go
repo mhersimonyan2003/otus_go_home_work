@@ -89,7 +89,13 @@ func TestValidate(t *testing.T) {
 				Role:   "not_valid role",
 				Phones: []string{"12345678901", "12345"},
 			},
-			expectedErr: ValidationErrors{{Field: "ID", Err: ErrInvalidStrLen}, {Field: "Age", Err: ErrInvalidIntMax}, {Field: "Email", Err: ErrInvalidStrValue}, {Field: "Role", Err: ErrInvalidStrNotListed}, {Field: "Phones", Err: ErrInvalidStrLen}},
+			expectedErr: ValidationErrors{
+				{Field: "ID", Err: ErrInvalidStrLen},
+				{Field: "Age", Err: ErrInvalidIntMax},
+				{Field: "Email", Err: ErrInvalidStrValue},
+				{Field: "Role", Err: ErrInvalidStrNotListed},
+				{Field: "Phones", Err: ErrInvalidStrLen},
+			},
 		},
 		{
 			in: App{

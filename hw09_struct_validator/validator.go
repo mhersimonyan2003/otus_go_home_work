@@ -45,13 +45,9 @@ func Validate(v interface{}) error {
 	}
 
 	t := iv.Type()
-
 	for i := 0; i < iv.NumField(); i++ {
 		field := t.Field(i)
 		value := iv.Field(i)
-
-		valueType := value.Type()
-		valueTypeKind := value.Type().Kind()
 
 		validateTag := field.Tag.Get("validate")
 
@@ -62,62 +58,74 @@ func Validate(v interface{}) error {
 		validationRestrictions := strings.Split(validateTag, "|")
 
 		for _, restriction := range validationRestrictions {
-			validationKey := strings.Split(restriction, ":")[0]
-			validationValue := strings.Split(restriction, ":")[1]
-
-			if valueTypeKind == reflect.String {
-				err := validateString(value.String(), validationKey, validationValue)
-
-				if err != nil {
-					validationErrors = append(validationErrors, ValidationError{
-						Field: field.Name,
-						Err:   err,
-					})
-				}
-			}
-			if valueTypeKind == reflect.Slice && valueType.Elem().Kind() == reflect.String {
-				var err error
-				for i := 0; i < value.Len(); i++ {
-					err = validateString(value.Index(i).String(), validationKey, validationValue)
-					if err != nil {
-						validationErrors = append(validationErrors, ValidationError{
-							Field: field.Name,
-							Err:   err,
-						})
-						break
-					}
-				}
-			}
-
-			if valueTypeKind == reflect.Int {
-				err := validateInt(int(value.Int()), validationKey, validationValue)
-
-				if err != nil {
-					validationErrors = append(validationErrors, ValidationError{
-						Field: field.Name,
-						Err:   err,
-					})
-				}
-			}
-
-			if valueTypeKind == reflect.Slice && valueType.Elem().Kind() == reflect.Int {
-				var err error
-				for i := 0; i < value.Len(); i++ {
-					err = validateInt(int(value.Int()), validationKey, validationValue)
-					if err != nil {
-						validationErrors = append(validationErrors, ValidationError{
-							Field: field.Name,
-							Err:   err,
-						})
-						break
-					}
-				}
-			}
+			validationErrors = validateByRestriction(field, value, restriction, validationErrors)
 		}
 	}
 
 	// Place your code here.
 	return validationErrors
+}
+
+func validateByRestriction(
+	field reflect.StructField,
+	value reflect.Value,
+	restriction string,
+	ve ValidationErrors,
+) ValidationErrors {
+	validationKey := strings.Split(restriction, ":")[0]
+	validationValue := strings.Split(restriction, ":")[1]
+
+	valueType := value.Type()
+	valueTypeKind := value.Type().Kind()
+
+	if valueTypeKind == reflect.String {
+		err := validateString(value.String(), validationKey, validationValue)
+		if err != nil {
+			ve = append(ve, ValidationError{
+				Field: field.Name,
+				Err:   err,
+			})
+		}
+	}
+	if valueTypeKind == reflect.Slice && valueType.Elem().Kind() == reflect.String {
+		var err error
+		for i := 0; i < value.Len(); i++ {
+			err = validateString(value.Index(i).String(), validationKey, validationValue)
+			if err != nil {
+				ve = append(ve, ValidationError{
+					Field: field.Name,
+					Err:   err,
+				})
+				break
+			}
+		}
+	}
+
+	if valueTypeKind == reflect.Int {
+		err := validateInt(int(value.Int()), validationKey, validationValue)
+		if err != nil {
+			ve = append(ve, ValidationError{
+				Field: field.Name,
+				Err:   err,
+			})
+		}
+	}
+
+	if valueTypeKind == reflect.Slice && valueType.Elem().Kind() == reflect.Int {
+		var err error
+		for i := 0; i < value.Len(); i++ {
+			err = validateInt(int(value.Int()), validationKey, validationValue)
+			if err != nil {
+				ve = append(ve, ValidationError{
+					Field: field.Name,
+					Err:   err,
+				})
+				break
+			}
+		}
+	}
+
+	return ve
 }
 
 func validateString(value string, validationKey, validationValue string) error {
