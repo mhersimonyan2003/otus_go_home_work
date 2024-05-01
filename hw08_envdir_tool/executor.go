@@ -1,9 +1,9 @@
 package main
 
 import (
-	"fmt"
 	"os"
 	"os/exec"
+	"strings"
 )
 
 // RunCmd runs a command + arguments (cmd) with environment variables from env.
@@ -19,24 +19,32 @@ func RunCmd(cmd []string, env Environment) (returnCode int) {
 	// Create the command
 	execute := exec.Command(command, args...)
 	execute.Stdout = os.Stdout
+	execute.Env = os.Environ()
 
 	for key, envItem := range env {
 		if envItem.NeedRemove {
-			os.Unsetenv(key)
+			execute.Env = removeEnvKeyExecute(execute.Env, key)
+
 			if envItem.Value != "" {
-				os.Setenv(key, envItem.Value)
+				execute.Env = append(execute.Env, key+"="+envItem.Value)
 			}
 		} else {
-			os.Setenv(key, envItem.Value)
+			execute.Env = append(execute.Env, key+"="+envItem.Value)
 		}
 	}
 
-	execute.Env = os.Environ()
-	err := execute.Run()
-	if err != nil {
-		fmt.Println(err)
-		return -1
-	}
+	execute.Run()
 
 	return execute.ProcessState.ExitCode()
+}
+
+func removeEnvKeyExecute(env []string, key string) []string {
+	for i, envItem := range env {
+		if strings.Split(envItem, "=")[0] == key {
+			env = append(env[:i], env[i+1:]...)
+			break
+		}
+	}
+
+	return env
 }
