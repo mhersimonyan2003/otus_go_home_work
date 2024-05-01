@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 type UserRole string
@@ -42,10 +44,69 @@ func TestValidate(t *testing.T) {
 		expectedErr error
 	}{
 		{
-			// Place your code here.
+			in:          "Invalid Input for function: Not a struct",
+			expectedErr: ErrInvalidInput,
 		},
-		// ...
-		// Place your code here.
+		{
+			in: User{
+				ID:     "123456789012345678901234567890123456",
+				Name:   "John",
+				Age:    25,
+				Email:  "test@example.com",
+				Role:   "admin",
+				Phones: []string{"12345678901"},
+			},
+			expectedErr: ValidationErrors{},
+		},
+		{
+			in: User{
+				ID:     "12345678901234564567890123456",
+				Name:   "John",
+				Age:    25,
+				Email:  "test@example.com",
+				Role:   "admin",
+				Phones: []string{"12345678901"},
+			},
+			expectedErr: ValidationErrors{{Field: "ID", Err: ErrInvalidStrLen}},
+		},
+		{
+			in: User{
+				ID:     "123456789012345678901234567890123456",
+				Name:   "John",
+				Age:    25,
+				Email:  "test@example.com",
+				Role:   "not_valid role",
+				Phones: []string{"12345678901"},
+			},
+			expectedErr: ValidationErrors{{Field: "Role", Err: ErrInvalidStrNotListed}},
+		},
+		{
+			in: User{
+				ID:     "123456789012345678901234567",
+				Name:   "John",
+				Age:    54,
+				Email:  "testexample.com",
+				Role:   "not_valid role",
+				Phones: []string{"12345678901", "12345"},
+			},
+			expectedErr: ValidationErrors{{Field: "ID", Err: ErrInvalidStrLen}, {Field: "Age", Err: ErrInvalidIntMax}, {Field: "Email", Err: ErrInvalidStrValue}, {Field: "Role", Err: ErrInvalidStrNotListed}, {Field: "Phones", Err: ErrInvalidStrLen}},
+		},
+		{
+			in: App{
+				Version: "1.0.0",
+			},
+			expectedErr: ValidationErrors{},
+		},
+		{
+			in: App{
+				Version: "1.0.02",
+			},
+			expectedErr: ValidationErrors{{Field: "Version", Err: ErrInvalidStrLen}},
+		},
+		{
+			in:          Response{Code: 700},
+			expectedErr: ValidationErrors{},
+		},
 	}
 
 	for i, tt := range tests {
@@ -53,8 +114,9 @@ func TestValidate(t *testing.T) {
 			tt := tt
 			t.Parallel()
 
-			// Place your code here.
-			_ = tt
+			err := Validate(tt.in)
+
+			require.Equal(t, tt.expectedErr, err)
 		})
 	}
 }
