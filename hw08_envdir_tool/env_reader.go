@@ -52,16 +52,16 @@ func ReadDir(dir string) (Environment, error) {
 			break
 		}
 
+		if err := scanner.Err(); err != nil {
+			return nil, err
+		}
+
 		if len(line) == 0 {
 			env[entry.Name()] = EnvValue{
 				Value:      "",
 				NeedRemove: true,
 			}
 			continue
-		}
-
-		if err := scanner.Err(); err != nil {
-			return nil, err
 		}
 
 		line = strings.ReplaceAll(line, "\x00", "\n")

@@ -18,7 +18,11 @@ func RunCmd(cmd []string, env Environment) (returnCode int) {
 
 	// Create the command
 	execute := exec.Command(command, args...)
+
+	execute.Stdin = os.Stdin
 	execute.Stdout = os.Stdout
+	execute.Stderr = os.Stderr
+
 	execute.Env = os.Environ()
 
 	for key, envItem := range env {
