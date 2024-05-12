@@ -24,19 +24,33 @@ var (
 	ErrInvalidIntMin       = errors.New("value is smaller than min")
 	ErrInvalidIntMax       = errors.New("value is bigger than max")
 	ErrInvalidIntRange     = errors.New("value is out of range")
+	ErrUnknown             = errors.New("unknown error")
 )
 
 func (v ValidationErrors) Error() string {
-	errString := ""
+	errString := strings.Builder{}
 
-	for _, err := range v {
-		errString += fmt.Sprintf("%s: %s\n", err.Field, err.Err)
+	for i, err := range v {
+		errString.WriteString(fmt.Sprintf("%s: %s", err.Field, err.Err))
+		if i != len(v)-1 {
+			errString.WriteString("\n")
+		}
 	}
 
-	return errString
+	return errString.String()
 }
 
-func Validate(v interface{}) error {
+func Validate(v interface{}) (err error) {
+	defer func() {
+		if r := recover(); r != nil {
+			if rErr, ok := r.(error); ok {
+				err = rErr
+			} else {
+				err = ErrUnknown
+			}
+		}
+	}()
+
 	iv := reflect.ValueOf(v)
 	validationErrors := ValidationErrors{}
 
@@ -47,6 +61,10 @@ func Validate(v interface{}) error {
 	t := iv.Type()
 	for i := 0; i < iv.NumField(); i++ {
 		field := t.Field(i)
+		if !field.IsExported() {
+			continue
+		}
+
 		value := iv.Field(i)
 
 		validateTag := field.Tag.Get("validate")
@@ -62,7 +80,6 @@ func Validate(v interface{}) error {
 		}
 	}
 
-	// Place your code here.
 	return validationErrors
 }
 
@@ -142,7 +159,7 @@ func validateString(value string, validationKey, validationValue string) error {
 	case "len":
 		strLen, err := strconv.Atoi(validationValue)
 		if err != nil {
-			return err
+			panic(err)
 		}
 
 		if strLen != len(value) {
@@ -162,7 +179,7 @@ func validateInt(value int, validationKey, validationValue string) error {
 	case "min":
 		minValue, err := strconv.Atoi(validationValue)
 		if err != nil {
-			return err
+			panic(err)
 		}
 		if value < minValue {
 			return ErrInvalidIntMin
@@ -170,7 +187,7 @@ func validateInt(value int, validationKey, validationValue string) error {
 	case "max":
 		maxValue, err := strconv.Atoi(validationValue)
 		if err != nil {
-			return err
+			panic(err)
 		}
 		if value > maxValue {
 			return ErrInvalidIntMax
@@ -178,11 +195,11 @@ func validateInt(value int, validationKey, validationValue string) error {
 	case "range":
 		minValue, err := strconv.Atoi(strings.Split(validationValue, ",")[0])
 		if err != nil {
-			return err
+			panic(err)
 		}
 		maxValue, err := strconv.Atoi(strings.Split(validationValue, ",")[1])
 		if err != nil {
-			return err
+			panic(err)
 		}
 		if value < minValue || value > maxValue {
 			return ErrInvalidIntRange
