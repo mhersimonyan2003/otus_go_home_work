@@ -31,7 +31,7 @@ func GetDomainStat(r io.Reader, domain string) (DomainStat, error) {
 type userEmails [100_000]string
 
 func getUsers(r io.Reader) (result userEmails, err error) {
-	var json = jsoniter.ConfigCompatibleWithStandardLibrary
+	json := jsoniter.ConfigCompatibleWithStandardLibrary
 
 	decoder := json.NewDecoder(r)
 	for i := 0; decoder.More(); i++ {
