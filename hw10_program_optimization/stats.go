@@ -20,40 +20,42 @@ type User struct {
 
 type DomainStat map[string]int
 
+var ErrReaderIsNil = fmt.Errorf("reader is nil")
+
 func GetDomainStat(r io.Reader, domain string) (DomainStat, error) {
-	u, err := getUsers(r)
+	users, err := getUsers(r)
 	if err != nil {
 		return nil, fmt.Errorf("get users error: %w", err)
 	}
-	return countDomains(u, domain)
+	return countDomains(users, domain)
 }
 
-type userEmails [100_000]string
-
-func getUsers(r io.Reader) (result userEmails, err error) {
-	json := jsoniter.ConfigCompatibleWithStandardLibrary
-
-	decoder := json.NewDecoder(r)
-	for i := 0; decoder.More(); i++ {
-		var user User
-		if err = decoder.Decode(&user); err != nil {
-			return
-		}
-		result[i] = user.Email
+func getUsers(r io.Reader) (*jsoniter.Decoder, error) {
+	if r == nil {
+		return nil, ErrReaderIsNil
 	}
 
-	return
+	json := jsoniter.ConfigCompatibleWithStandardLibrary
+	decoder := json.NewDecoder(r)
+
+	return decoder, nil
 }
 
-func countDomains(uE userEmails, domain string) (DomainStat, error) {
+func countDomains(usersDecoder *jsoniter.Decoder, domain string) (DomainStat, error) {
+	domain = strings.ToLower(domain)
 	result := make(DomainStat)
 
-	for _, email := range uE {
-		if strings.HasSuffix(strings.ToLower(email), "."+strings.ToLower(domain)) {
-			emailKey := strings.ToLower(strings.SplitN(email, "@", 2)[1])
-
-			result[emailKey]++
+	for usersDecoder.More() {
+		var user User
+		if err := usersDecoder.Decode(&user); err != nil {
+			return nil, err
+		}
+		email := strings.ToLower(user.Email)
+		if strings.HasSuffix(email, "."+domain) {
+			domainPart := strings.SplitN(email, "@", 2)[1]
+			result[domainPart]++
 		}
 	}
+
 	return result, nil
 }
