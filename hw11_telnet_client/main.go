@@ -37,20 +37,21 @@ func main() {
 		return
 	}
 
-	go func() {
-		err = client.Receive()
-		if err != nil {
-			fmt.Println("Error receiving:", err)
-		}
-	}()
-
-	wg.Add(1)
+	wg.Add(2)
 
 	go func() {
 		defer wg.Done()
 		err = client.Send()
 		if err != nil {
 			fmt.Println("Error sending:", err)
+		}
+	}()
+
+	go func() {
+		wg.Done()
+		err = client.Receive()
+		if err != nil {
+			fmt.Println("Error receiving:", err)
 		}
 	}()
 
