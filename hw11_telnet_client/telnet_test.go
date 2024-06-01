@@ -127,7 +127,6 @@ func TestTelnetClient(t *testing.T) {
 			out := &bytes.Buffer{}
 			timeout, err := time.ParseDuration("10s")
 			require.NoError(t, err)
-			// Use an invalid address to simulate an error during connection
 			client := NewTelnetClient("invalid_address", timeout, io.NopCloser(in), out)
 			err = client.Connect()
 			require.Error(t, err)
@@ -146,7 +145,6 @@ func TestTelnetClient(t *testing.T) {
 			out := &bytes.Buffer{}
 			timeout, err := time.ParseDuration("10s")
 			require.NoError(t, err)
-			// Use an invalid address to simulate an error during connection
 			client := NewTelnetClient(l.Addr().String(), timeout, io.NopCloser(in), out)
 			err = client.Connect()
 			require.Error(t, err)

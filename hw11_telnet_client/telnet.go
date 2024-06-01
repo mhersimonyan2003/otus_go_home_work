@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"net"
@@ -35,9 +36,10 @@ func (c *telnetClient) Connect() error {
 
 func (c *telnetClient) Send() error {
 	_, err := io.Copy(c.conn, c.in)
+	var netErr *net.OpError
 
 	if err != nil {
-		if _, ok := err.(*net.OpError); ok {
+		if errors.As(err, &netErr) {
 			fmt.Fprintln(os.Stderr, "Connection was closed by peer")
 			os.Exit(0)
 		} else {
