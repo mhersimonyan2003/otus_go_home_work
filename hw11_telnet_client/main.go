@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"flag"
 	"fmt"
 	"io"
@@ -42,8 +43,17 @@ func main() {
 	go func() {
 		defer wg.Done()
 		err := client.Send()
-		if err != nil {
+		if errors.Is(err, ErrConnectionClosed) {
+			return
+		} else if err != nil {
 			fmt.Println("Error sending:", err)
+		}
+
+		_, err = in.Read([]byte{0})
+
+		if errors.Is(err, io.EOF) {
+			fmt.Fprintln(os.Stderr, "...EOF")
+			os.Exit(0)
 		}
 	}()
 

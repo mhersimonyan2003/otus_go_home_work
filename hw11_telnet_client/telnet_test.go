@@ -2,7 +2,6 @@ package main
 
 import (
 	"bytes"
-	"fmt"
 	"io"
 	"net"
 	"sync"
@@ -15,7 +14,6 @@ import (
 func TestTelnetClient(t *testing.T) {
 	t.Run("basic", func(t *testing.T) {
 		l, err := net.Listen("tcp", "127.0.0.1:")
-		fmt.Println(l.Addr().String())
 		require.NoError(t, err)
 		defer func() { require.NoError(t, l.Close()) }()
 
