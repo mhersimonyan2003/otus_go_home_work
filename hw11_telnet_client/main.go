@@ -37,15 +37,14 @@ func main() {
 		return
 	}
 
-	wg.Add(2)
-
 	go func() {
-		defer wg.Done()
-		err := client.Receive()
+		err = client.Receive()
 		if err != nil {
 			fmt.Println("Error receiving:", err)
 		}
 	}()
+
+	wg.Add(1)
 
 	go func() {
 		defer wg.Done()
@@ -54,15 +53,6 @@ func main() {
 			fmt.Println("Error sending:", err)
 		}
 	}()
-
-	// interrupt := make(chan os.Signal, 1)
-	// signal.Notify(interrupt, syscall.SIGTERM)
-
-	// go func() {
-	// 	<-interrupt
-	// 	fmt.Println("...EOF")
-	// 	os.Exit(0)
-	// }()
 
 	wg.Wait()
 }

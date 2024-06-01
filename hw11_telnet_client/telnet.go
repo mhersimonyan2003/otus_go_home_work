@@ -41,10 +41,17 @@ func (c *telnetClient) Send() error {
 	if err != nil {
 		if errors.As(err, &netErr) {
 			fmt.Fprintln(os.Stderr, "Connection was closed by peer")
-			os.Exit(0)
-		} else {
-			return err
+			return nil
 		}
+
+		return err
+	}
+
+	_, err = c.in.Read([]byte{0})
+
+	if errors.Is(err, io.EOF) {
+		fmt.Fprintln(os.Stderr, "...EOF")
+		return nil
 	}
 
 	return nil
