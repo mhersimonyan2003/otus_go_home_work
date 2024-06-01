@@ -6,11 +6,15 @@ import (
 	"io"
 	"net"
 	"os"
+	"os/signal"
+	"sync"
+	"syscall"
 	"time"
 )
 
 func main() {
 	// Example usage
+	var wg sync.WaitGroup
 	var timeout time.Duration
 	flag.DurationVar(&timeout, "timeout", 10*time.Second, "connection timeout")
 	flag.Parse()
@@ -37,15 +41,32 @@ func main() {
 		return
 	}
 
+	wg.Add(2)
+
 	go func() {
+		defer wg.Done()
 		err := client.Receive()
 		if err != nil {
 			fmt.Println("Error receiving:", err)
 		}
 	}()
 
-	err = client.Send()
-	if err != nil {
-		fmt.Println("Error sending:", err)
-	}
+	go func() {
+		defer wg.Done()
+		err = client.Send()
+		if err != nil {
+			fmt.Println("Error sending:", err)
+		}
+	}()
+
+	interrupt := make(chan os.Signal, 1)
+	signal.Notify(interrupt, syscall.SIGTERM)
+
+	go func() {
+		<-interrupt
+		fmt.Println("...EOF")
+		os.Exit(0)
+	}()
+
+	wg.Wait()
 }

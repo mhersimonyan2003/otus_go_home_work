@@ -1,8 +1,10 @@
 package main
 
 import (
+	"fmt"
 	"io"
 	"net"
+	"os"
 	"time"
 )
 
@@ -27,16 +29,30 @@ func (c *telnetClient) Connect() error {
 		return err
 	}
 	c.conn = conn
+	fmt.Fprintf(os.Stderr, "...Connected to %s\n", c.address)
 	return nil
 }
 
 func (c *telnetClient) Send() error {
 	_, err := io.Copy(c.conn, c.in)
-	return err
+
+	if err != nil {
+		if _, ok := err.(*net.OpError); ok {
+			fmt.Fprintln(os.Stderr, "Connection was closed by peer")
+			os.Exit(0)
+		} else {
+			return err
+		}
+	}
+
+	return nil
 }
 
 func (c *telnetClient) Receive() error {
 	_, err := io.Copy(c.out, c.conn)
+	if err != nil {
+		return err
+	}
 	return err
 }
 
