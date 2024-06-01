@@ -41,15 +41,15 @@ func main() {
 
 	go func() {
 		defer wg.Done()
-		err = client.Send()
+		err := client.Send()
 		if err != nil {
 			fmt.Println("Error sending:", err)
 		}
 	}()
 
 	go func() {
-		wg.Done()
-		err = client.Receive()
+		defer wg.Done()
+		err := client.Receive()
 		if err != nil {
 			fmt.Println("Error receiving:", err)
 		}
