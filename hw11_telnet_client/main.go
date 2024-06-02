@@ -7,12 +7,13 @@ import (
 	"io"
 	"net"
 	"os"
+	"os/signal"
 	"sync"
+	"syscall"
 	"time"
 )
 
 func main() {
-	var wg sync.WaitGroup
 	var timeout time.Duration
 	flag.DurationVar(&timeout, "timeout", 10*time.Second, "connection timeout")
 	flag.Parse()
@@ -37,6 +38,8 @@ func main() {
 		fmt.Println("Error connecting:", err)
 		return
 	}
+
+	var wg sync.WaitGroup
 
 	wg.Add(2)
 
@@ -63,6 +66,14 @@ func main() {
 		if err != nil {
 			fmt.Println("Error receiving:", err)
 		}
+	}()
+
+	sigChan := make(chan os.Signal, 1)
+	signal.Notify(sigChan, syscall.SIGTERM, syscall.SIGINT)
+
+	go func() {
+		<-sigChan
+		client.Close()
 	}()
 
 	wg.Wait()
