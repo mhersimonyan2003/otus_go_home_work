@@ -18,6 +18,7 @@ type Server struct {
 
 type Application interface {
 	// Define methods that will be used by the application
+
 }
 
 func NewServer(logger logger.Logger, app Application) *Server {

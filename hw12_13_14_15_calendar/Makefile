@@ -27,8 +27,8 @@ test:
 	@go test ./... -race -v
 
 lint:
-	@echo "Running golangci-lint..."
-	@golangci-lint run
+	echo "Running golangci-lint..."
+	golangci-lint run
 
 lint-fix:
 	@echo "Running golangci-lint --fix..."
