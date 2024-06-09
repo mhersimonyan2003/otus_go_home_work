@@ -1,6 +1,7 @@
 # Variables
 APP_NAME = calendar
 CONFIG_FILE = configs/config.toml
+GOLANGCI_LINT = $(shell which golangci-lint)
 
 # Directories
 CMD_DIR = ./cmd/calendar
@@ -26,13 +27,21 @@ test:
 	@echo "Running tests..."
 	@go test ./... -race -v
 
-lint:
+lint: golangci-lint
 	@echo "Running golangci-lint..."
-	@golangci-lint run
+	@$(GOLANGCI_LINT) run
 
-lint-fix:
+golangci-lint:
+ifeq (, $(GOLANGCI_LINT))
+	@echo "Installing golangci-lint..."
+	@curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v1.50.1
+else
+	@echo "golangci-lint is already installed."
+endif
+
+lint-fix: golangci-lint
 	@echo "Running golangci-lint --fix..."
-	@golangci-lint run --fix
+	@$(GOLANGCI_LINT) run --fix
 
 clean:
 	@echo "Cleaning up..."
