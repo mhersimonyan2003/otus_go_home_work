@@ -28,12 +28,10 @@ test:
 
 lint:
 	@echo "Running golangci-lint..."
-	@go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
 	@golangci-lint run
 
 lint-fix:
 	@echo "Running golangci-lint --fix..."
-	@go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
 	@golangci-lint run --fix
 
 clean:
