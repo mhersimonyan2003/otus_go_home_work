@@ -34,7 +34,7 @@ lint: golangci-lint
 golangci-lint:
 ifeq (, $(GOLANGCI_LINT))
 	@echo "Installing golangci-lint..."
-	@curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v1.50.1
+	@curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(GOPATH)/bin v1.50.1
 else
 	@echo "golangci-lint is already installed."
 endif
