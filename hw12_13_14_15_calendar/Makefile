@@ -27,22 +27,14 @@ test:
 	@echo "Running tests..."
 	@go test ./... -race -v
 
-lint: golangci-lint
+lint:
 	@echo "Running golangci-lint..."
-	@$(GOLANGCI_LINT) run
+	@golangci-lint run
 
-golangci-lint:
-ifeq (, $(GOLANGCI_LINT))
-	@echo "Installing golangci-lint..."
-	@curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(HOME)/bin v1.50.1
-	@export PATH=$(HOME)/bin:$PATH
-else
-	@echo "golangci-lint is already installed."
-endif
 
-lint-fix: golangci-lint
+lint-fix:
 	@echo "Running golangci-lint --fix..."
-	@$(GOLANGCI_LINT) run --fix
+	@golangci-lint run --fix
 
 clean:
 	@echo "Cleaning up..."
