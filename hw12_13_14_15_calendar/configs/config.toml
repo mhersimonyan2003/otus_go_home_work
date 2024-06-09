@@ -1,5 +1,17 @@
-[logger]
-level = "INFO"
+[Logger]
+Level = "info"
 
-# TODO
-# ...
+[HTTPServer]
+Host = "localhost"
+Port = 8080
+
+[Storage]
+Type = "memory"  # "memory" or "sql"
+
+[Database]
+Host = "localhost"
+Port = 5432
+User = "calendar_user"
+Password = "calendar_password"
+DBName = "calendar_db"
+SSLMode = "disable"
