@@ -1,45 +1,34 @@
-# Variables
-APP_NAME = calendar
-CONFIG_FILE = configs/config.toml
-GOLANGCI_LINT = $(shell which golangci-lint)
+BIN := "./bin/calendar"
+DOCKER_IMG="calendar:develop"
 
-# Directories
-CMD_DIR = ./cmd/calendar
-BIN_DIR = ./bin
-BUILD_DIR = $(BIN_DIR)/$(APP_NAME)
-
-# Commands
-.PHONY: all build run test lint clean
-
-all: build
+GIT_HASH := $(shell git log --format="%h" -n 1)
+LDFLAGS := -X main.release="develop" -X main.buildDate=$(shell date -u +%Y-%m-%dT%H:%M:%S) -X main.gitHash=$(GIT_HASH)
 
 build:
-	@echo "Building binary..."
-	@mkdir -p $(BIN_DIR)
-	@go build -o $(BUILD_DIR) $(CMD_DIR)
-	@echo "Build completed. Binary is located at $(BUILD_DIR)"
+	go build -v -o $(BIN) -ldflags "$(LDFLAGS)" ./cmd/calendar
 
 run: build
-	@echo "Running the service..."
-	@$(BUILD_DIR) --config=$(CONFIG_FILE)
+	$(BIN) -config ./configs/config.toml
+
+build-img:
+	docker build \
+		--build-arg=LDFLAGS="$(LDFLAGS)" \
+		-t $(DOCKER_IMG) \
+		-f build/Dockerfile .
+
+run-img: build-img
+	docker run $(DOCKER_IMG)
+
+version: build
+	$(BIN) version
 
 test:
-	@echo "Running tests..."
-	@go test ./... -race -v
+	go test -race ./internal/...
 
 install-lint-deps:
 	(which golangci-lint > /dev/null) || curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(shell go env GOPATH)/bin v1.50.1
 
 lint: install-lint-deps
-	@echo "Running golangci-lint..."
-	@golangci-lint run
+	golangci-lint run ./...
 
-
-lint-fix: install-lint-deps
-	@echo "Running golangci-lint --fix..."
-	@golangci-lint run --fix
-
-clean:
-	@echo "Cleaning up..."
-	@rm -rf $(BIN_DIR)
-	@echo "Cleanup completed."
+.PHONY: build run build-img run-img version test lint
