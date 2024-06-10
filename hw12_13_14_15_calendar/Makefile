@@ -27,12 +27,15 @@ test:
 	@echo "Running tests..."
 	@go test ./... -race -v
 
-lint:
+install-lint-deps:
+	(which golangci-lint > /dev/null) || curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(shell go env GOPATH)/bin v1.50.1
+
+lint: install-lint-deps
 	@echo "Running golangci-lint..."
 	@golangci-lint run
 
 
-lint-fix:
+lint-fix: install-lint-deps
 	@echo "Running golangci-lint --fix..."
 	@golangci-lint run --fix
 
