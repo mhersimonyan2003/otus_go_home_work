@@ -68,6 +68,6 @@ func (s *Server) Stop(ctx context.Context) error {
 	return s.httpServer.Shutdown(ctx)
 }
 
-func helloWorldHandler(w http.ResponseWriter, r *http.Request) {
+func helloWorldHandler(w http.ResponseWriter, _ *http.Request) {
 	w.Write([]byte("Hello, World!"))
 }
