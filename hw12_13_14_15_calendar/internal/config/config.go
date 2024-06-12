@@ -33,16 +33,16 @@ type Config struct {
 	}
 }
 
-func NewConfig(configFile string) *Config {
+func NewConfig(configFile string) (*Config, error) {
 	viper.SetConfigFile(configFile)
 	if err := viper.ReadInConfig(); err != nil {
-		panic("failed to read config file: " + err.Error())
+		return nil, err
 	}
 
 	var config Config
 	if err := viper.Unmarshal(&config); err != nil {
-		panic("failed to unmarshal config: " + err.Error())
+		return nil, err
 	}
 
-	return &config
+	return &config, nil
 }

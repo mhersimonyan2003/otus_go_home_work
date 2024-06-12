@@ -23,7 +23,7 @@ func loggingMiddleware(logg logger.Logger) mux.MiddlewareFunc {
 				r.Method,
 				r.RequestURI,
 				r.Proto,
-				http.StatusOK, // Assuming all requests are OK. Update this to the actual status code if necessary.
+				r.Response.StatusCode,
 				latency,
 				r.UserAgent(),
 			))

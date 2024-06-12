@@ -33,7 +33,13 @@ func main() {
 		return
 	}
 
-	config := internalConfig.NewConfig(configFile)
+	config, err := internalConfig.NewConfig(configFile)
+
+	if err != nil {
+		os.Stderr.WriteString("failed to read config: " + err.Error() + "\n")
+		os.Exit(1)
+	}
+
 	logg := logger.New(config.Logger.Level)
 
 	var storage app.Storage

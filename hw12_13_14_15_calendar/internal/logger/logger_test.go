@@ -6,86 +6,96 @@ import (
 	"testing"
 )
 
-func TestSimpleLogger_Info(t *testing.T) {
-	var buf bytes.Buffer
-	logger := log.New(&buf, "", log.LstdFlags)
-	l := &SimpleLogger{level: Info, logger: logger}
-
-	l.Info("This is an info message")
-	if !contains(buf.String(), "[INFO] This is an info message") {
-		t.Errorf("expected info message, got %s", buf.String())
+func TestLogger(t *testing.T) {
+	testCases := []struct {
+		level Level
+		msg   string
+		want  string
+	}{
+		{level: Info, msg: "This is an info message", want: "[INFO] This is an info message"},
+		{level: Debug, msg: "This is an info message", want: "[INFO] This is an info message"},
+		{level: Warn, msg: "This is an info message", want: ""},
+		{level: Error, msg: "This is an info message", want: ""},
 	}
 
-	buf.Reset()
-	l = &SimpleLogger{level: Debug, logger: logger}
-	l.Info("This is an info message")
-	if !contains(buf.String(), "[INFO] This is an info message") {
-		t.Errorf("expected info message, got %s", buf.String())
+	for _, tc := range testCases {
+		var buf bytes.Buffer
+		logger := log.New(&buf, "", log.LstdFlags)
+		l := &SimpleLogger{level: tc.level, logger: logger}
+
+		l.Info(tc.msg)
+		if !contains(buf.String(), tc.want) {
+			t.Errorf("expected info message, got %s", buf.String())
+		}
 	}
 
-	buf.Reset()
-	l = &SimpleLogger{level: Error, logger: logger}
-	l.Info("This is an info message")
-	if contains(buf.String(), "[INFO] This is an info message") {
-		t.Errorf("did not expect info message, got %s", buf.String())
+	testCases = []struct {
+		level Level
+		msg   string
+		want  string
+	}{
+		{level: Info, msg: "This is an error message", want: "[ERROR] This is an error message"},
+		{level: Debug, msg: "This is an error message", want: "[ERROR] This is an error message"},
+		{level: Warn, msg: "This is an error message", want: "[ERROR] This is an error message"},
+		{level: Error, msg: "This is an error message", want: "[ERROR] This is an error message"},
+	}
+
+	for _, tc := range testCases {
+		var buf bytes.Buffer
+		logger := log.New(&buf, "", log.LstdFlags)
+		l := &SimpleLogger{level: tc.level, logger: logger}
+
+		l.Error(tc.msg)
+		if !contains(buf.String(), tc.want) {
+			t.Errorf("expected error message, got %s", buf.String())
+		}
+	}
+
+	testCases = []struct {
+		level Level
+		msg   string
+		want  string
+	}{
+		{level: Info, msg: "This is a debug message", want: ""},
+		{level: Debug, msg: "This is a debug message", want: "[DEBUG] This is a debug message"},
+		{level: Warn, msg: "This is a debug message", want: ""},
+		{level: Error, msg: "This is a debug message", want: ""},
+	}
+
+	for _, tc := range testCases {
+		var buf bytes.Buffer
+		logger := log.New(&buf, "", log.LstdFlags)
+		l := &SimpleLogger{level: tc.level, logger: logger}
+
+		l.Debug(tc.msg)
+		if !contains(buf.String(), tc.want) {
+			t.Errorf("expected debug message, got %s", buf.String())
+		}
+	}
+
+	testCases = []struct {
+		level Level
+		msg   string
+		want  string
+	}{
+		{level: Info, msg: "This is a warn message", want: ""},
+		{level: Debug, msg: "This is a warn message", want: "[WARN] This is a warn message"},
+		{level: Warn, msg: "This is a warn message", want: "[WARN] This is a warn message"},
+		{level: Error, msg: "This is a warn message", want: ""},
+	}
+
+	for _, tc := range testCases {
+		var buf bytes.Buffer
+		logger := log.New(&buf, "", log.LstdFlags)
+		l := &SimpleLogger{level: tc.level, logger: logger}
+
+		l.Warn(tc.msg)
+		if !contains(buf.String(), tc.want) {
+			t.Errorf("expected warn message, got %s", buf.String())
+		}
 	}
 }
 
-func TestSimpleLogger_Error(t *testing.T) {
-	var buf bytes.Buffer
-	logger := log.New(&buf, "", log.LstdFlags)
-	l := &SimpleLogger{level: Error, logger: logger}
-
-	l.Error("This is an error message")
-	if !contains(buf.String(), "[ERROR] This is an error message") {
-		t.Errorf("expected error message, got %s", buf.String())
-	}
-}
-
-func TestSimpleLogger_Debug(t *testing.T) {
-	var buf bytes.Buffer
-	logger := log.New(&buf, "", log.LstdFlags)
-	l := &SimpleLogger{level: Debug, logger: logger}
-
-	l.Debug("This is a debug message")
-	if !contains(buf.String(), "[DEBUG] This is a debug message") {
-		t.Errorf("expected debug message, got %s", buf.String())
-	}
-
-	buf.Reset()
-	l = &SimpleLogger{level: Info, logger: logger}
-	l.Debug("This is a debug message")
-	if contains(buf.String(), "[DEBUG] This is a debug message") {
-		t.Errorf("did not expect debug message, got %s", buf.String())
-	}
-}
-
-func TestSimpleLogger_Warn(t *testing.T) {
-	var buf bytes.Buffer
-	logger := log.New(&buf, "", log.LstdFlags)
-	l := &SimpleLogger{level: Warn, logger: logger}
-
-	l.Warn("This is a warn message")
-	if !contains(buf.String(), "[WARN] This is a warn message") {
-		t.Errorf("expected warn message, got %s", buf.String())
-	}
-
-	buf.Reset()
-	l = &SimpleLogger{level: Debug, logger: logger}
-	l.Warn("This is a warn message")
-	if !contains(buf.String(), "[WARN] This is a warn message") {
-		t.Errorf("expected warn message, got %s", buf.String())
-	}
-
-	buf.Reset()
-	l = &SimpleLogger{level: Info, logger: logger}
-	l.Warn("This is a warn message")
-	if contains(buf.String(), "[WARN] This is a warn message") {
-		t.Errorf("did not expect warn message, got %s", buf.String())
-	}
-}
-
-// Helper function to check if a string contains a substring.
 func contains(str, substr string) bool {
 	return bytes.Contains([]byte(str), []byte(substr))
 }
