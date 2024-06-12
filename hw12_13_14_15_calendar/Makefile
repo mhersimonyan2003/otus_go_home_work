@@ -31,4 +31,7 @@ install-lint-deps:
 lint: install-lint-deps
 	golangci-lint run ./...
 
+lint-fix: install-lint-deps
+	golangci-lint run --fix ./...
+
 .PHONY: build run build-img run-img version test lint

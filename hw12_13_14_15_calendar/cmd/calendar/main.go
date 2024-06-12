@@ -34,7 +34,6 @@ func main() {
 	}
 
 	config, err := internalConfig.NewConfig(configFile)
-
 	if err != nil {
 		os.Stderr.WriteString("failed to read config: " + err.Error() + "\n")
 		os.Exit(1)
