@@ -7,39 +7,44 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
+	"github.com/mhersimonyan2003/otus_go_home_work/hw12_13_14_15_calendar/internal/app"
 	"github.com/mhersimonyan2003/otus_go_home_work/hw12_13_14_15_calendar/internal/logger"
 )
 
 type Server struct {
 	httpServer *http.Server
 	logger     logger.Logger
-	app        Application
+	app        *app.App
 }
 
-type Application interface {
-	// Define methods that will be used by the application
-}
-
-func NewServer(logger logger.Logger, app Application) *Server {
-	r := mux.NewRouter()
-	r.Use(loggingMiddleware(logger))
-	r.HandleFunc("/", helloWorldHandler).Methods(http.MethodGet)
-
-	return &Server{
-		httpServer: &http.Server{
-			Addr:         ":8080",
-			Handler:      r,
-			ReadTimeout:  10 * time.Second,
-			WriteTimeout: 10 * time.Second,
-			IdleTimeout:  30 * time.Second,
-		},
+func NewServer(logger logger.Logger, app *app.App, host string, port int) *Server {
+	s := &Server{
 		logger: logger,
 		app:    app,
 	}
+
+	r := mux.NewRouter()
+	r.Use(loggingMiddleware(logger))
+	r.HandleFunc("/", s.helloWorldHandler).Methods(http.MethodGet)
+	r.HandleFunc("/events", s.createEventHandler).Methods(http.MethodPost)
+	r.HandleFunc("/events/{id}", s.updateEventHandler).Methods(http.MethodPut)
+	r.HandleFunc("/events/{id}", s.deleteEventHandler).Methods(http.MethodDelete)
+	r.HandleFunc("/events", s.listEventsHandler).Methods(http.MethodGet)
+	r.HandleFunc("/events/{id}", s.getEventHandler).Methods(http.MethodGet)
+
+	s.httpServer = &http.Server{
+		Addr:         fmt.Sprintf("%s:%d", host, port),
+		Handler:      r,
+		ReadTimeout:  10 * time.Second,
+		WriteTimeout: 10 * time.Second,
+		IdleTimeout:  30 * time.Second,
+	}
+
+	return s
 }
 
 func (s *Server) Start(ctx context.Context) error {
-	s.logger.Info("Starting server on " + s.httpServer.Addr)
+	s.logger.Info("Starting HTTP server on " + s.httpServer.Addr)
 	errCh := make(chan error)
 
 	go func() {
@@ -66,8 +71,4 @@ func (s *Server) Start(ctx context.Context) error {
 
 func (s *Server) Stop(ctx context.Context) error {
 	return s.httpServer.Shutdown(ctx)
-}
-
-func helloWorldHandler(w http.ResponseWriter, _ *http.Request) {
-	w.Write([]byte("Hello, World!"))
 }

@@ -1,4 +1,5 @@
 BIN := "./bin/calendar"
+PROTO_DIR = ./api
 DOCKER_IMG="calendar:develop"
 
 GIT_HASH := $(shell git log --format="%h" -n 1)
@@ -33,5 +34,14 @@ lint: install-lint-deps
 
 lint-fix: install-lint-deps
 	golangci-lint run --fix ./...
+
+generate:
+	protoc --proto_path=$(PROTO_DIR) \
+		--go_out=$(PROTO_DIR) --go_opt=paths=source_relative \
+		--go-grpc_out=$(PROTO_DIR) --go-grpc_opt=paths=source_relative \
+		$(PROTO_DIR)/*.proto
+
+clean:
+	rm -rf $(BIN)
 
 .PHONY: build run build-img run-img version test lint

@@ -5,12 +5,19 @@ Level = "info"
 Host = "localhost"
 Port = 8080
 
+[GRPCServer]
+Host = "localhost"
+Port = 9090
+
 [Storage]
 Type = "memory"  # "memory" or "sql"
 
+[API]
+Mode = "grpc"   # "grpc" or "http"
+
 [Database]
 Host = "localhost"
-Port = 5432
+Port = 5433
 User = "calendar_user"
 Password = "calendar_password"
 DBName = "calendar_db"

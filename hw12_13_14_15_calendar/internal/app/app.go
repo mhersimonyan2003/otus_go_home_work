@@ -1,26 +1,35 @@
 package app
 
 import (
-	"context"
+	"time"
+
+	"github.com/mhersimonyan2003/otus_go_home_work/hw12_13_14_15_calendar/internal/storage"
 )
 
-type App struct { // TODO
+type App struct {
+	storage storage.Storage
 }
 
-type Logger interface { // TODO
+func New(storage storage.Storage) *App {
+	return &App{storage: storage}
 }
 
-type Storage interface { // TODO
+func (a *App) AddEvent(event storage.Event) error {
+	return a.storage.AddEvent(event)
 }
 
-func New(_ Logger, _ Storage) *App {
-	return &App{}
+func (a *App) UpdateEvent(event storage.Event) error {
+	return a.storage.UpdateEvent(event)
 }
 
-func (a *App) CreateEvent(_ context.Context, _, _ string) error {
-	// TODO
-	return nil
-	// return a.storage.CreateEvent(storage.Event{ID: id, Title: title})
+func (a *App) DeleteEvent(eventID string) error {
+	return a.storage.DeleteEvent(eventID)
 }
 
-// TODO
+func (a *App) ListEvents(start, end time.Time) ([]storage.Event, error) {
+	return a.storage.ListEvents(start, end)
+}
+
+func (a *App) GetEventByID(eventID string) (storage.Event, error) {
+	return a.storage.GetEventByID(eventID)
+}

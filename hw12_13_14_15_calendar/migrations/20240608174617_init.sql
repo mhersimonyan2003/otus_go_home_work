@@ -1,6 +1,6 @@
 -- +goose Up
 CREATE TABLE events (
-    id UUID PRIMARY KEY,
+    id SERIAL PRIMARY KEY,
     title TEXT NOT NULL,
     start_time TIMESTAMP NOT NULL,
     end_time TIMESTAMP NOT NULL,

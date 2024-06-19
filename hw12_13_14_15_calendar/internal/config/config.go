@@ -20,8 +20,15 @@ type Config struct {
 		Host string
 		Port int
 	}
+	GRPCServer struct {
+		Host string
+		Port int
+	}
 	Storage struct {
 		Type string
+	}
+	API struct {
+		Mode string
 	}
 	Database struct {
 		Host     string
