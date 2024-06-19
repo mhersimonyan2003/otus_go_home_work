@@ -1,0 +1,34 @@
+syntax = "proto3";
+
+package api;
+
+import "event.proto";
+import "google/protobuf/empty.proto";
+import "google/protobuf/timestamp.proto";
+
+option go_package = "github.com/mhersimonyan2003/otus_go_home_work/hw12_13_14_15_calendar/api;api";
+
+service CalendarService {
+    rpc AddEvent (Event) returns (google.protobuf.Empty);
+    rpc UpdateEvent (Event) returns (google.protobuf.Empty);
+    rpc DeleteEvent (DeleteEventRequest) returns (google.protobuf.Empty);
+    rpc ListEvents (ListEventsRequest) returns (ListEventsResponse);
+    rpc GetEvent (GetEventRequest) returns (Event);
+}
+
+message DeleteEventRequest {
+    string id = 1;
+}
+
+message ListEventsRequest {
+    google.protobuf.Timestamp start = 1;
+    google.protobuf.Timestamp end = 2;
+}
+
+message ListEventsResponse {
+    repeated Event events = 1;
+}
+
+message GetEventRequest {
+    string id = 1;
+}

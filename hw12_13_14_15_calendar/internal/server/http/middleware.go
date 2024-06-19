@@ -9,12 +9,25 @@ import (
 	"github.com/mhersimonyan2003/otus_go_home_work/hw12_13_14_15_calendar/internal/logger"
 )
 
+type responseWriter struct {
+	http.ResponseWriter
+	statusCode int
+}
+
+func (rw *responseWriter) WriteHeader(code int) {
+	rw.statusCode = code
+	rw.ResponseWriter.WriteHeader(code)
+}
+
 func loggingMiddleware(logg logger.Logger) mux.MiddlewareFunc {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			start := time.Now()
-			next.ServeHTTP(w, r)
 			latency := time.Since(start)
+
+			rw := &responseWriter{w, http.StatusOK}
+
+			next.ServeHTTP(rw, r)
 
 			logg.Info(fmt.Sprintf(
 				"%s [%s] %s %s %s %d %s %q",
@@ -23,7 +36,7 @@ func loggingMiddleware(logg logger.Logger) mux.MiddlewareFunc {
 				r.Method,
 				r.RequestURI,
 				r.Proto,
-				r.Response.StatusCode,
+				rw.statusCode,
 				latency,
 				r.UserAgent(),
 			))

@@ -4,6 +4,7 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"log"
 	"os"
 	"os/signal"
 	"syscall"
@@ -13,13 +14,18 @@ import (
 	"github.com/mhersimonyan2003/otus_go_home_work/hw12_13_14_15_calendar/internal/app"
 	internalConfig "github.com/mhersimonyan2003/otus_go_home_work/hw12_13_14_15_calendar/internal/config"
 	"github.com/mhersimonyan2003/otus_go_home_work/hw12_13_14_15_calendar/internal/logger"
+	internalgrpc "github.com/mhersimonyan2003/otus_go_home_work/hw12_13_14_15_calendar/internal/server/grpc"
 	internalhttp "github.com/mhersimonyan2003/otus_go_home_work/hw12_13_14_15_calendar/internal/server/http"
+	"github.com/mhersimonyan2003/otus_go_home_work/hw12_13_14_15_calendar/internal/storage"
 	memorystorage "github.com/mhersimonyan2003/otus_go_home_work/hw12_13_14_15_calendar/internal/storage/memory"
 	sqlstorage "github.com/mhersimonyan2003/otus_go_home_work/hw12_13_14_15_calendar/internal/storage/sql"
 	"github.com/pressly/goose"
 )
 
-var configFile string
+var (
+	configFile string
+	mode       string
+)
 
 func init() {
 	flag.StringVar(&configFile, "config", "/etc/calendar/config.toml", "Path to configuration file")
@@ -41,7 +47,7 @@ func main() {
 
 	logg := logger.New(config.Logger.Level)
 
-	var storage app.Storage
+	var storage storage.Storage
 	switch config.Storage.Type {
 	case "memory":
 		storage = memorystorage.New()
@@ -64,30 +70,41 @@ func main() {
 		os.Exit(1)
 	}
 
-	calendar := app.New(logg, storage)
+	calendar := app.New(storage)
 
-	server := internalhttp.NewServer(logg, calendar)
+	switch config.API.Mode {
+	case "http":
+		server := internalhttp.NewServer(logg, calendar, config.HTTPServer.Host, config.HTTPServer.Port)
 
-	ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM, syscall.SIGHUP)
-	defer cancel()
-
-	go func() {
-		<-ctx.Done()
-
-		ctx, cancel := context.WithTimeout(context.Background(), time.Second*3)
+		ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM, syscall.SIGHUP)
 		defer cancel()
+		go func() {
+			<-ctx.Done()
 
-		if err := server.Stop(ctx); err != nil {
-			logg.Error("failed to stop http server: " + err.Error())
+			ctx, cancel := context.WithTimeout(context.Background(), time.Second*3)
+			defer cancel()
+
+			if err := server.Stop(ctx); err != nil {
+				logg.Error("failed to stop http server: " + err.Error())
+			}
+		}()
+
+		logg.Info("calendar is running...")
+
+		if err := server.Start(ctx); err != nil {
+			logg.Error("failed to start http server: " + err.Error())
+			cancel()
+			os.Exit(1) //nolint:gocritic
 		}
-	}()
+	case "grpc":
+		if err := internalgrpc.RunGRPCServer(logg, calendar, config.GRPCServer.Host, config.GRPCServer.Port); err != nil {
+			logg.Error("GRPC Server failed: " + err.Error())
+			os.Exit(1)
+		}
 
-	logg.Info("calendar is running...")
-
-	if err := server.Start(ctx); err != nil {
-		logg.Error("failed to start http server: " + err.Error())
-		cancel()
-		os.Exit(1) //nolint:gocritic
+		logg.Info("calendar is running grpc...")
+	default:
+		log.Fatalf("Unknown mode: %s", mode)
 	}
 }
 
