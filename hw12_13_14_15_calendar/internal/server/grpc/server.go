@@ -27,7 +27,7 @@ func NewGRPCServer(app *app.App, logger logger.Logger) *Server {
 	}
 }
 
-func (s *Server) AddEvent(ctx context.Context, req *pb.Event) (*emptypb.Empty, error) {
+func (s *Server) AddEvent(_ context.Context, req *pb.Event) (*emptypb.Empty, error) {
 	event := storage.Event{
 		ID:        req.Id,
 		Title:     req.Title,
@@ -45,7 +45,7 @@ func (s *Server) AddEvent(ctx context.Context, req *pb.Event) (*emptypb.Empty, e
 	return &emptypb.Empty{}, nil
 }
 
-func (s *Server) UpdateEvent(ctx context.Context, req *pb.Event) (*emptypb.Empty, error) {
+func (s *Server) UpdateEvent(_ context.Context, req *pb.Event) (*emptypb.Empty, error) {
 	event := storage.Event{
 		ID:        req.Id,
 		Title:     req.Title,
@@ -63,7 +63,7 @@ func (s *Server) UpdateEvent(ctx context.Context, req *pb.Event) (*emptypb.Empty
 	return &emptypb.Empty{}, nil
 }
 
-func (s *Server) DeleteEvent(ctx context.Context, req *pb.DeleteEventRequest) (*emptypb.Empty, error) {
+func (s *Server) DeleteEvent(_ context.Context, req *pb.DeleteEventRequest) (*emptypb.Empty, error) {
 	if err := s.app.DeleteEvent(req.Id); err != nil {
 		s.logger.Error("Failed to delete event: " + err.Error())
 		return nil, err
@@ -73,7 +73,7 @@ func (s *Server) DeleteEvent(ctx context.Context, req *pb.DeleteEventRequest) (*
 	return &emptypb.Empty{}, nil
 }
 
-func (s *Server) ListEvents(ctx context.Context, req *pb.ListEventsRequest) (*pb.ListEventsResponse, error) {
+func (s *Server) ListEvents(_ context.Context, req *pb.ListEventsRequest) (*pb.ListEventsResponse, error) {
 	start := req.Start.AsTime()
 	end := req.End.AsTime()
 
@@ -98,7 +98,7 @@ func (s *Server) ListEvents(ctx context.Context, req *pb.ListEventsRequest) (*pb
 	return &pb.ListEventsResponse{Events: pbEvents}, nil
 }
 
-func (s *Server) GetEvent(ctx context.Context, req *pb.GetEventRequest) (*pb.Event, error) {
+func (s *Server) GetEvent(_ context.Context, req *pb.GetEventRequest) (*pb.Event, error) {
 	event, err := s.app.GetEventByID(req.Id)
 	if err != nil {
 		s.logger.Error("Failed to get event: " + err.Error())
